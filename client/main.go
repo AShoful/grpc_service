@@ -19,14 +19,45 @@ func main() {
 	}
 	defer conn.Close()
 
-	client := pb.NewBookServiceClient(conn)
+	bookClient := pb.NewBookServiceClient(conn)
+	userClient := pb.NewUserServiceClient(conn)
 
 	r := gin.Default()
 
 	r.SetTrustedProxies([]string{"127.0.0.1"})
+	// auth
 
+	r.POST("/auth/sign-up", func(ctx *gin.Context) {
+		var user pb.User
+		if err := ctx.ShouldBindJSON(&user); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		res, err := userClient.SignUp(ctx, &user)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusCreated, gin.H{"id": res.Id})
+	})
+
+	r.GET("/auth/sign-in", func(ctx *gin.Context) {
+		var user pb.SignInRequest
+		if err := ctx.ShouldBindJSON(&user); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		res, err := userClient.SignIn(ctx, &user)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusCreated, gin.H{"token": res.Token})
+	})
+
+	// books
 	r.GET("/books", func(ctx *gin.Context) {
-		res, err := client.GetBooks(ctx, &pb.Empty{})
+		res, err := bookClient.GetBooks(ctx, &pb.Empty{})
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -41,7 +72,7 @@ func main() {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 			return
 		}
-		res, err := client.GetBook(ctx, &pb.BookId{Id: uint32(id)})
+		res, err := bookClient.GetBook(ctx, &pb.BookId{Id: uint32(id)})
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
@@ -55,7 +86,7 @@ func main() {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		res, err := client.CreateBook(ctx, &book)
+		res, err := bookClient.CreateBook(ctx, &book)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -78,7 +109,7 @@ func main() {
 		}
 
 		book.Id = uint32(id)
-		res, err := client.UpdateBook(ctx, &book)
+		res, err := bookClient.UpdateBook(ctx, &book)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -93,7 +124,7 @@ func main() {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 			return
 		}
-		_, err = client.DeleteBook(ctx, &pb.BookId{Id: uint32(id)})
+		_, err = bookClient.DeleteBook(ctx, &pb.BookId{Id: uint32(id)})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

@@ -8,6 +8,7 @@ message Book {
   uint32 id = 1;
   string title = 2;
   string author = 3;
+  uint32 userid = 4;
 }
 
 message BookId {
@@ -18,8 +19,35 @@ message BookList {
   repeated Book books = 1;
 }
 
+message User {
+  uint32 id = 1;
+  string name = 2;
+  string username = 3;
+  string password = 4;
+}
+
+message SignInRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message UserId {
+  uint32 id = 1;
+}
+
+message AuthResponse {
+  string token = 1;
+}
+
 message Empty {}
 
+// ---- USER ----
+service UserService {
+  rpc SignUp(User) returns (UserId);
+  rpc SignIn(SignInRequest) returns (AuthResponse);
+}
+
+// ---- BOOK ----
 service BookService {
   rpc CreateBook(Book) returns (BookId);
   rpc GetBook(BookId) returns (Book);
