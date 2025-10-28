@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,7 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
+
+var jwtToken string
 
 func main() {
 	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -52,12 +56,14 @@ func main() {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		jwtToken = res.Token
 		ctx.JSON(http.StatusCreated, gin.H{"token": res.Token})
 	})
 
 	// books
 	r.GET("/books", func(ctx *gin.Context) {
-		res, err := bookClient.GetBooks(ctx, &pb.Empty{})
+		mdCtx := withAuthMetadata(context.Background())
+		res, err := bookClient.GetBooks(mdCtx, &pb.Empty{})
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -66,13 +72,14 @@ func main() {
 	})
 
 	r.GET("/books/:id", func(ctx *gin.Context) {
+		mdCtx := withAuthMetadata(context.Background())
 		idParam := ctx.Param("id")
 		id, err := strconv.ParseUint(idParam, 10, 32)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 			return
 		}
-		res, err := bookClient.GetBook(ctx, &pb.BookId{Id: uint32(id)})
+		res, err := bookClient.GetBook(mdCtx, &pb.BookId{Id: uint32(id)})
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
@@ -81,12 +88,13 @@ func main() {
 	})
 
 	r.POST("/books", func(ctx *gin.Context) {
+		mdCtx := withAuthMetadata(context.Background())
 		var book pb.Book
 		if err := ctx.ShouldBindJSON(&book); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		res, err := bookClient.CreateBook(ctx, &book)
+		res, err := bookClient.CreateBook(mdCtx, &book)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -95,6 +103,7 @@ func main() {
 	})
 
 	r.PUT("/books/:id", func(ctx *gin.Context) {
+		mdCtx := withAuthMetadata(context.Background())
 		var book pb.Book
 		idParam := ctx.Param("id")
 		id, err := strconv.ParseUint(idParam, 10, 32)
@@ -109,7 +118,7 @@ func main() {
 		}
 
 		book.Id = uint32(id)
-		res, err := bookClient.UpdateBook(ctx, &book)
+		res, err := bookClient.UpdateBook(mdCtx, &book)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -118,13 +127,14 @@ func main() {
 	})
 
 	r.DELETE("/books/:id", func(ctx *gin.Context) {
+		mdCtx := withAuthMetadata(context.Background())
 		idParam := ctx.Param("id")
 		id, err := strconv.ParseUint(idParam, 10, 32)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 			return
 		}
-		_, err = bookClient.DeleteBook(ctx, &pb.BookId{Id: uint32(id)})
+		_, err = bookClient.DeleteBook(mdCtx, &pb.BookId{Id: uint32(id)})
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -133,4 +143,14 @@ func main() {
 	})
 
 	r.Run(":5000")
+}
+
+func withAuthMetadata(ctx context.Context) context.Context {
+	if jwtToken == "" {
+		return ctx
+	}
+	md := metadata.New(map[string]string{
+		"authorization": "Bearer " + jwtToken,
+	})
+	return metadata.NewOutgoingContext(ctx, md)
 }
