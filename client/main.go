@@ -156,6 +156,5 @@ func withAuthMetadata(ctx context.Context) context.Context {
 		"authorization": "Bearer " + jwtToken,
 	})
 
-	fmt.Println(md)
 	return metadata.NewOutgoingContext(ctx, md)
 }
