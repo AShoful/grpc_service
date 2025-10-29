@@ -24,17 +24,9 @@ type Repository struct {
 	Book
 }
 
-type BookRepo struct {
-	db *gorm.DB
-}
-
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{
 		Authorization: NewAuthPostgres(db),
 		Book:          NewBookPostgres(db),
 	}
-}
-
-func NewBookRepo(db *gorm.DB) *BookRepo {
-	return &BookRepo{db: db}
 }

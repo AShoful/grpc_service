@@ -10,18 +10,18 @@ type Service struct {
 	Book
 }
 
+type Authorization interface {
+	CreateUser(user models.User) (uint, error)
+	GenerateToken(username, password string) (string, error)
+	ParseToken(token string) (uint, error)
+}
+
 type Book interface {
 	Create(book models.Book) (uint, error)
 	GetAll() ([]models.Book, error)
 	GetById(bookId uint) (models.Book, error)
 	Delete(userId, bookId uint) error
 	Update(userId, bookId uint, book models.UpdateBook) error
-}
-
-type Authorization interface {
-	CreateUser(user models.User) (uint, error)
-	GenerateToken(username, password string) (string, error)
-	ParseToken(token string) (uint, error)
 }
 
 func NewService(repos *repository.Repository) *Service {

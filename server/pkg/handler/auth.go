@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"grpc/proto"
 	"grpc/server/models"
 	"grpc/server/pkg/service"
@@ -47,8 +46,6 @@ func (h *AuthHandler) SignIn(ctx context.Context, req *proto.SignInRequest) (*pr
 		Username: req.Username,
 		Password: req.Password,
 	}
-
-	fmt.Println(signInInput)
 
 	if err := validate.Struct(signInInput); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

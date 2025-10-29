@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -56,7 +57,9 @@ func main() {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		fmt.Println(res)
 		jwtToken = res.Token
+		fmt.Println(jwtToken)
 		ctx.JSON(http.StatusCreated, gin.H{"token": res.Token})
 	})
 
@@ -152,5 +155,7 @@ func withAuthMetadata(ctx context.Context) context.Context {
 	md := metadata.New(map[string]string{
 		"authorization": "Bearer " + jwtToken,
 	})
+
+	fmt.Println(md)
 	return metadata.NewOutgoingContext(ctx, md)
 }

@@ -48,11 +48,3 @@ func UnaryAuthInterceptor(service *service.Service) grpc.UnaryServerInterceptor 
 		return handler(newCtx, req)
 	}
 }
-
-func UserIDFromContext(ctx context.Context) (uint, error) {
-	id, ok := ctx.Value(userIDKey).(uint)
-	if !ok {
-		return 0, fmt.Errorf("user_id not found in context")
-	}
-	return id, nil
-}

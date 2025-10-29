@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"grpc/proto"
 	"grpc/server/models"
 	"grpc/server/pkg/service"
@@ -31,7 +32,7 @@ func (h *BookHandler) CreateBook(ctx context.Context, req *proto.Book) (*proto.B
 
 	userId, _ := UserIDFromContext(ctx)
 
-	book.ID = userId
+	book.UserId = userId
 
 	id, err := h.bookService.Create(book)
 	if err != nil {
@@ -95,4 +96,13 @@ func (h *BookHandler) DeleteBook(ctx context.Context, req *proto.BookId) (*proto
 		return nil, err
 	}
 	return &proto.Empty{}, nil
+}
+
+func UserIDFromContext(ctx context.Context) (uint, error) {
+	id, ok := ctx.Value(userIDKey).(uint)
+	if !ok {
+		return 0, fmt.Errorf("user_id not found in context")
+	}
+
+	return id, nil
 }
