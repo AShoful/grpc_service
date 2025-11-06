@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -46,7 +45,7 @@ func main() {
 		ctx.JSON(http.StatusCreated, gin.H{"id": res.Id})
 	})
 
-	r.GET("/auth/sign-in", func(ctx *gin.Context) {
+	r.POST("/auth/sign-in", func(ctx *gin.Context) {
 		var user pb.SignInRequest
 		if err := ctx.ShouldBindJSON(&user); err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -57,9 +56,7 @@ func main() {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		fmt.Println(res)
 		jwtToken = res.Token
-		fmt.Println(jwtToken)
 		ctx.JSON(http.StatusCreated, gin.H{"token": res.Token})
 	})
 
