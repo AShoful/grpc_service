@@ -74,7 +74,7 @@ func (r *BookPostgres) Update(userId, bookId uint, input models.UpdateBook) erro
 	}
 
 	if userId != book.UserId {
-		return fmt.Errorf("user does not have permission to delete this book")
+		return fmt.Errorf("user does not have permission to update this book")
 	}
 
 	if input.Title != nil {

@@ -6,6 +6,9 @@ import (
 	"grpc/server/pkg/service"
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"google.golang.org/grpc"
 )
@@ -16,13 +19,29 @@ func RunServer(h *handler.Handler, s *service.Service) {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(handler.UnaryAuthInterceptor(s)))
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(handler.UnaryAuthInterceptor(s)),
+	)
 
 	proto.RegisterUserServiceServer(grpcServer, h.AuthHandler)
 	proto.RegisterBookServiceServer(grpcServer, h.BookHandler)
 
-	log.Println("gRPC server running on :50051")
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	// Запуск сервера в горутине
+	go func() {
+		log.Println("gRPC server running on :50051")
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	// Ловим сигналы OS
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	<-sigCh
+
+	log.Println("Shutting down gRPC server...")
+
+	grpcServer.GracefulStop()
+
+	log.Println("gRPC server stopped gracefully")
 }
