@@ -4,7 +4,11 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
+	"time"
 
 	pb "grpc/proto"
 
@@ -142,7 +146,32 @@ func main() {
 		ctx.JSON(http.StatusOK, gin.H{"message": "book deleted"})
 	})
 
-	r.Run(":5000")
+	srv := &http.Server{
+		Addr:    ":5000",
+		Handler: r,
+	}
+
+	go func() {
+		log.Println("REST proxy running on :5000")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen error: %s", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down REST server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("forced shutdown: %v", err)
+	}
+
+	log.Println("REST server stopped gracefully")
 }
 
 func withAuthMetadata(ctx context.Context) context.Context {
