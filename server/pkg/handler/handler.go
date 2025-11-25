@@ -15,3 +15,8 @@ func NewHandler(services *service.Service) *Handler {
 		BookHandler: NewBookHandler(services.Book),
 	}
 }
+
+// UserIDKey exposes the private userIDKey for tests.
+func UserIDKey() interface{} {
+	return userIDKey
+}

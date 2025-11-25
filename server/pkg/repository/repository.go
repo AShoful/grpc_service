@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate mockgen -source=repository.go -destination=mocks/mock.go
+
 type Authorization interface {
 	CreateUser(user models.User) (uint, error)
 	GetUser(username string) (models.User, error)

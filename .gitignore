@@ -1,3 +1,6 @@
 .idea
 .env
+server/test_coverage.out
+server/coverage.html
+
 

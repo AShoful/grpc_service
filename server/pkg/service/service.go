@@ -5,6 +5,8 @@ import (
 	"grpc/server/pkg/repository"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+
 type Service struct {
 	Authorization
 	Book

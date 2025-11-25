@@ -120,5 +120,12 @@ If you modify or add `.proto` files, generate the corresponding Go code using:
 ```bash
 protoc --go_out=. --go-grpc_out=. proto/book.proto
 ```
+## Running the unit tests
+
+From the grpc/server:
+
+```bash
+  ./run_tests.sh
+```
 
 
